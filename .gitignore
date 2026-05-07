@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+dist/
+build/
+.npm
+*.log
+
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+.gradle/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.classpath
+.project
+.settings/
+.factorypath
+
+# Antigravity/Gemini
+.metadata/
+implementation_plan.md
+implementation_plan2
+prd_analysis.md

@@ -1,0 +1,14 @@
+{
+  "name": "PPT to Figma Converter",
+  "id": "123456789",
+  "api": "1.0.0",
+  "main": "dist/main.js",
+  "ui": "dist/src/ui/index.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "http://localhost:3000"
+    ],
+    "reasoning": "For local development and backend communication"
+  }
+}
