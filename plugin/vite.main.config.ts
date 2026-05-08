@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite';
 import path from 'path';
 
+// Figma plugin main 스레드는 ES2020(?., ??) 미지원. es2017로 낮춰 esbuild가 하위 변환한다.
 export default defineConfig({
   build: {
-    target: 'esnext',
+    target: 'es2017',
     outDir: 'dist',
     emptyOutDir: true, // 첫 빌드이므로 dist 폴더를 비웁니다.
     lib: {

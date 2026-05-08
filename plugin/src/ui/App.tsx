@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { importBuildLabel } from '../constants/import-build';
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<string>('업로드 대기 중');
@@ -7,30 +8,33 @@ const App: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setStatus('백엔드로 파일 전송 중...');
+    const fileName = file.name;
+    const fallbackTag = importBuildLabel();
+
+    setStatus(`[${fallbackTag}] ${fileName} — 백엔드로 전송 중... (Eclipse 콘솔에 서버 로그 표시)`);
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      // PRD에 명시된 백엔드 로컬 주소로 전송
       const response = await fetch('http://localhost:3000/api/imports/analyze', {
         method: 'POST',
         body: formData,
       });
 
+      const data = await response.json();
+      const tag = (typeof data.buildLabel === 'string' ? data.buildLabel : null) ?? fallbackTag;
+      const serverName = data?.data?.fileName ?? fileName;
+
       if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+        throw new Error(data.error ?? `Server responded with ${response.status}`);
       }
 
-      const data = await response.json();
-      setStatus(`분석 완료: ${data.message} (File: ${data.data.fileName})`);
-      
-      // 플러그인 백그라운드 로직(main.ts)으로 결과 메시지 전송 예시
-      parent.postMessage({ pluginMessage: { type: 'analyze-complete', data } }, '*');
+      setStatus(`[${tag}] 분석 완료: ${data.message} (File: ${serverName})`);
 
+      parent.postMessage({ pluginMessage: { type: 'analyze-complete', data } }, '*');
     } catch (error: any) {
-      setStatus(`오류 발생: ${error.message}`);
+      setStatus(`[${fallbackTag}] 오류: ${error.message}`);
     }
   };
 
@@ -38,6 +42,9 @@ const App: React.FC = () => {
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h2>PPT to Figma Converter</h2>
       <p>상태: {status}</p>
+      <p style={{ fontSize: 12, color: '#666' }}>
+        빌드 태그는 서버 기준입니다. 단계 로그는 <strong>Eclipse</strong>에서 Spring Boot 앱 콘솔(로그)을 확인하세요.
+      </p>
       <input type="file" accept=".pptx" onChange={handleFileUpload} />
     </div>
   );
