@@ -17,6 +17,12 @@ public class ShapeDTO {
     private java.util.List<Integer> dashPatternMultipliers;
     private java.util.List<Double> adjustValues;
     private TextDTO text;
+    /** PNG/JPEG 등 원본 바이트 Base64 — 삽입 그림(`PICTURE`) 및 도형 blip 채우기 */
+    private String imageBase64;
+    /** 예: image/png, image/jpeg */
+    private String imageMimeType;
+    /** type이 GROUP일 때 자식 도형(슬라이드/부모 좌표와 동일한 로컬 px 규칙) */
+    private java.util.List<ShapeDTO> children;
 
     // Getters and Setters
     public String getType() { return type; }
@@ -59,4 +65,10 @@ public class ShapeDTO {
     public void setAdjustValues(java.util.List<Double> adjustValues) { this.adjustValues = adjustValues; }
     public TextDTO getText() { return text; }
     public void setText(TextDTO text) { this.text = text; }
+    public String getImageBase64() { return imageBase64; }
+    public void setImageBase64(String imageBase64) { this.imageBase64 = imageBase64; }
+    public String getImageMimeType() { return imageMimeType; }
+    public void setImageMimeType(String imageMimeType) { this.imageMimeType = imageMimeType; }
+    public java.util.List<ShapeDTO> getChildren() { return children; }
+    public void setChildren(java.util.List<ShapeDTO> children) { this.children = children; }
 }

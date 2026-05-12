@@ -3,25 +3,17 @@ package com.ppttofigma.backend.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SlideDTO {
-    private int slideNumber;
-    /** 마스터/레이아웃 매핑 실패 시 -1 */
-    private int masterIndex = -1;
-    private int layoutIndex = -1;
-    /** 슬라이드 배경 단색(상속 해석 후). 없으면 null */
+public class LayoutDTO {
+    private String name;
+    /** 레이아웃 배경 단색(없으면 마스터 배경으로 폴백한 값). 없으면 null */
     private String backgroundFillHex;
-    /** 슬라이드 배경 그림(blip). 레이아웃→마스터 상속 해석 */
+    /** 레이아웃 배경 그림(없으면 마스터 배경 그림으로 폴백한 값) */
     private String backgroundImageBase64;
     private String backgroundImageMimeType;
     private List<ShapeDTO> shapes = new ArrayList<>();
 
-    // Getters and Setters
-    public int getSlideNumber() { return slideNumber; }
-    public void setSlideNumber(int slideNumber) { this.slideNumber = slideNumber; }
-    public int getMasterIndex() { return masterIndex; }
-    public void setMasterIndex(int masterIndex) { this.masterIndex = masterIndex; }
-    public int getLayoutIndex() { return layoutIndex; }
-    public void setLayoutIndex(int layoutIndex) { this.layoutIndex = layoutIndex; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
     public String getBackgroundFillHex() { return backgroundFillHex; }
     public void setBackgroundFillHex(String backgroundFillHex) { this.backgroundFillHex = backgroundFillHex; }
     public String getBackgroundImageBase64() { return backgroundImageBase64; }

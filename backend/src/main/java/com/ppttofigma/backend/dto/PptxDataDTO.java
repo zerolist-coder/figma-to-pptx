@@ -8,6 +8,7 @@ public class PptxDataDTO {
     private double width;
     private double height;
     private List<SlideDTO> slides = new ArrayList<>();
+    private List<MasterDTO> masters = new ArrayList<>();
 
     // Getters and Setters
     public String getFileName() { return fileName; }
@@ -18,4 +19,6 @@ public class PptxDataDTO {
     public void setHeight(double height) { this.height = height; }
     public List<SlideDTO> getSlides() { return slides; }
     public void setSlides(List<SlideDTO> slides) { this.slides = slides; }
+    public List<MasterDTO> getMasters() { return masters; }
+    public void setMasters(List<MasterDTO> masters) { this.masters = masters; }
 }
