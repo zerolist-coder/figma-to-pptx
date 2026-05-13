@@ -1,6 +1,8 @@
 # PPT → Figma — 연속 작업·포맷 복구 핸드오프
 
 **용도:** 이 PC를 포맷한 뒤, 다른 사람·다음 세션에서 **맥락 없이** 이어가기 위한 단일 진입 문서. 에이전트는 **이 파일을 먼저 읽는다.**  
+**갱신 규칙 (2026-05-13):** **HANDOFF는 하루에 한 번만** 갱신한다. 당일 세부 작업·회고는 **`worklogs/YYYY-MM-DD/*.md`** 에만 적는다.
+
 **경로:** `worklogs/agent-handoff/HANDOFF.md` (레포 루트 기준)  
 **PRD:** 레포 루트 `2026-05-04-ppt-to-figma-plugin-prd.md`  
 **원격 저장소:** `https://github.com/zerolist-coder/figma-to-pptx.git` (로컬 작업 폴더 예: `D:\figma`)
@@ -10,7 +12,7 @@
 ## 1. 포맷 후 복구 체크리스트
 
 1. **Git** 설치 후 클론: `git clone https://github.com/zerolist-coder/figma-to-pptx.git` → 원하는 경로(예: `D:\figma`)에 둔다.
-2. **JDK 17** — `backend/pom.xml`의 `<java.version>17</java.version>` 과 일치해야 한다.
+2. **JDK 21** — `backend/pom.xml`의 `<java.version>21</java.version>` 과 일치해야 한다.
 3. **Node.js** — 플러그인 빌드용(예: LTS). `plugin/package.json`은 Vite 5, TypeScript 5, React 18.
 4. **백엔드 기동:**  
    `cd backend` → `mvn spring-boot:run` (또는 IDE에서 `PptToFigmaApplication` 실행).  
@@ -49,21 +51,14 @@
 | REST | `backend/.../controller/ImportController.java` |
 | Figma 렌더 | `plugin/src/plugin/main.ts` |
 | 업로드 UI (`fetch`) | `plugin/src/ui/App.tsx` |
-| 빌드 리비전 (UI 폴백) | `plugin/src/constants/import-build.ts` |
 | Vite(메인 번들) | `plugin/vite.main.config.ts` |
 | 일자별 메모 | `worklogs/YYYY-MM-DD/*.md` |
 
 ---
 
-## 4. 코드 기준 “진실” — 빌드 라벨·리비전
+## 4. API 응답 형태 (참고)
 
-과거 문서에는 `step1 - N` 형태와 `ImportBuildInfo.java` / `IMPORT_PIPELINE_STEP` 이 등장했으나, **현재 저장소 기준**은 아래와 같다.
-
-| 항목 | 위치 | 설명 |
-|------|------|------|
-| 서버 리비전 | `ImportController.IMPORT_REVISION` (`int`) | 분석 응답의 `buildLabel`에 **정수를 문자열로** 넣음 (예: `"13"`). |
-| 플러그인 폴백 | `import-build.ts`의 `IMPORT_REVISION` | 서버 응답 전·오프라인 시 `importBuildLabel()` = `String(IMPORT_REVISION)`. |
-| 동기 규칙 | 위 두 값을 **항상 같은 정수**로 유지 | 사용자에게 보이는 동작·파이프라인 결과가 바뀌어 빌드를 구분해야 할 때만 증가. 문서만 고친 경우는 불필요. |
+분석 성공 시 본문에 `data`(PptxData), `message`, `importId` 등이 포함된다. **`buildLabel` / `IMPORT_REVISION` 은 제거됨** (버전 숫자를 UI·알림에 표시하지 않음).
 
 **URL:** 플러그인은 `http://localhost:3000/api/imports/analyze` 로 고정 호출한다. 포트를 바꾸면 `application.properties`와 `App.tsx`·`manifest.json`을 함께 맞출 것.
 
@@ -73,31 +68,36 @@
 
 ### 5.1 최근 커밋 맥락 (git)
 
-- 초기 커밋 이후: 도형·텍스트 렌더 정확도 개선, **LayoutDTO/MasterDTO** 및 import 파이프라인·DTO·플러그인 동기화, **`ImportBuildInfo` 제거** 후 리비전은 **`ImportController` + `import-build.ts`** 로만 관리.
+- 초기 커밋 이후: 도형·텍스트 렌더 정확도 개선, **LayoutDTO/MasterDTO** 및 import 파이프라인·DTO·플러그인 동기화, **`ImportBuildInfo` 제거** 후 한때 `ImportController`+`import-build.ts` 로 빌드 라벨을 맞췄으나 **현재는 빌드 라벨 필드 자체를 쓰지 않음**.
+- **2026-05-13:** **표(`TABLE`)** DTO·백엔드 추출·플러그인 렌더(FigJam `createTable` / Design·병합 시 RECT 폴백), **텍스트 OOXML** 보강(`a:fld`, `a:pPr` 정렬, `bodyPr`, `schemeClr`, 어두운 배경 위 글자색 보정), `poi-ooxml-full` 등 의존성 정리. 당일 세부는 **`worklogs/2026-05-13/2026-05-13.md`**. HANDOFF 갱신은 **하루 1회**로 고정.
 
 ### 5.2 백엔드
 
 - **Apache POI `XMLSlideShow`** 로 슬라이드·마스터·레이아웃 순회, pt→px 등 좌표 스케일.
-- **DTO:** `PptxDataDTO`, `SlideDTO`, `MasterDTO`, `LayoutDTO`, `ShapeDTO`, 텍스트용 `TextDTO` / 단락·런 DTO 등.
-- **배경:** 단색(`backgroundFillHex`) 및 **배경 blip** (`XSLFBackground` → `backgroundImageBase64`), 상속(레이아웃→마스터 등).
-- **도형:** 기본 프리셋(RECT, ELLIPSE, 화살 계열, QUAD_ARROW 근사 등), **그림 채우기·삽입 그림**, **중첩 `XSLFGroupShape`** → `ShapeDTO.children`.
+- **DTO:** `PptxDataDTO`, `SlideDTO`, `MasterDTO`, `LayoutDTO`, `ShapeDTO`, 텍스트용 `TextDTO` / 단락·런 DTO, **`TableDataDTO` / `TableCellPieceDTO`** (`ShapeDTO.type === "TABLE"` 일 때).
+- **배경:** 단색(`backgroundFillHex`) 및 **배경 blip** (`XSLFBackground` → `backgroundImageBase64`) — OOXML **`srcRect` 있으면 서버 크롭** 후 전달, **`stretch`/`fillRect` 의 9-patch 는 슬라이드·배경 해상도로 PNG 합성**, **`tile` 이면** `backgroundImageFillStyle`(Figma `TILE`+`scalingFactor` 힌트) 포함, 상속(레이아웃→마스터 등) 시 픽셀·스타일 같이 전달.
+- **도형:** 기본 프리셋(RECT, ELLIPSE, 화살 계열, QUAD_ARROW 근사 등), **그림 채우기(TexturePaint)·삽입 그림**(`spPr/blipFill` **srcRect 크롭**, **stretch nine-slice 가능 시 서버 처리**, **`tile` → `imageFillStyle`**) , **중첩 `XSLFGroupShape`** → `ShapeDTO.children`.
+- **표:** **`XSLFTable`** → JSON **`type: "TABLE"`** + `table` (`numRows`/`numColumns`, `columnWidthsPx`/`rowHeightsPx`, `pieces`, `mergedCells`). 셀 위치는 **열·행 폭 누적**으로 계산. **`XSLFGraphicFrame`**(표 외): 차트/다이어그램은 생략, **폴백 그림** 있으면 `PICTURE`로.
+- **텍스트:** OOXML **`a:fld`**(CTTextField) DOM 순서 추출, **`a:pPr/@algn`**, **`bodyPr` inset·anchor**, 테마 **`schemeClr`** 등 — **`poi-ooxml-full`** + DrawingML 타입 보강. 매우 어두운 채우기 위 **어두운 글자색**은 흰색 보정.
 - **마스터/레이아웃:** 마스터·레이아웃 시트에서는 `isPlaceholder()` 도형 제외(슬라이드는 플레이스홀더 유지해 본문 텍스트 보존).
+- **삽입 그림(PICTURE):** OOXML `srcRect`(blip 크롭)가 있으면 **서버에서 래스터 크롭** 후 PNG로 전달(LLM 필요 없음). ImageIO 불가(EMF 등) 시 원본 그대로.
 - **기타:** 큰 이미지는 Base64 생략·플레이스홀더 처리 등 제한 있음(아래 한계 참고).
 
 ### 5.3 플러그인
 
 - 분석 응답 래핑 차이 흡수 후 `PptxData`로 언랩 → 렌더.
-- 페이지: **`01 PPT Masters`**, **`02 PPT Slides`** (필요 시 한 페이지에 세로 병합 — Starter 플랜 등 페이지 수 제한 대응).
+- 페이지: **`00 PPT Masters`** — 플러그인 실행 중인 페이지에 마스터·레이아웃 배치 후 이름 변경, **`01 PPT Slides`** 는 슬라이드 전용 새 페이지(제한 시 한 페이지 병합). 마스터 없을 때 슬라이드만 로드하면 실행 페이지 이름을 **`00 PPT Slides · …`** 로 맞춤.
 - 마스터/레이아웃 **컴포넌트** vs **백드롭**으로 배경 표현 분리(슬라이드 배경 가림 완화).
 - **`clipsContent = false`** 로 프레임 밖 그룹 클리핑 완화.
-- 텍스트: 멀티 런/단락, 가로 화살·QUAD_ARROW 등과 연동된 도형 생성 헬퍼.
-- `buildLabel` 표시: 서버 값 우선, 없으면 `importBuildLabel()`.
+- **`TABLE`:** **`figma.createTable`** 는 **FigJam 전용** API. **병합 없음 + API 존재** 시 네이티브 표로 렌더, 그 외(Figma Design·병합 표·실패)는 **프레임 + 셀 RECT** 폴백. 텍스트 셀은 기존 런 스타일 로직 재사용(`applyStyledRanges` 등).
+- 표 포함 시 **`preloadFonts`**·**`shapeListHasGraphicContent`** 경로에 표 반영. 텍스트는 **멀티 런/단락**, 라벨·플레이스홀더 **이중 레이어**, `textAlignVertical`, 도형+텍스트 **그룹 스냅** 등 기존 개선과 병행.
+- blip 채우기: OOXML **tile** → `imageFillStyle` / `backgroundImageFillStyle` 반영해 Figma **`TILE`+`scalingFactor`**; **stretch+fillRect** 는 서버에서 **9-patch PNG** 로 맞춘 뒤 **`FILL`**.
 
 ### 5.4 2026-05-11 작업 일지에 있던 추가 세부 (worklogs)
 
 - **POI/XmlBeans:** `CTShape` 등에서 `isSetSpPr()` 미지원 시 `getSpPr() == null` 패턴으로 컴파일·런타임 정리.
 - **화살:** `ShapeType`만으로 부족하면 DrawingML `prst` 읽기(`readPresetGeometryName` 등)로 보강.
-- **API 응답:** `{ data, buildLabel }` vs 슬라이드 배열 최상위 등 형태 차이 흡수.
+- **API 응답:** `{ data, message, … }` vs 슬라이드 배열이 최상위인 경우 등 형태 차이 흡수.
 
 ---
 
@@ -123,6 +123,7 @@ PRD 문서의 Phase 1~5(로드맵)와 레포 구현은 1:1이 아니다. `PIPELI
 | 슬라이드 텍스트 | 부분 (run/단락·정렬 일부) |
 | 이미지 | 부분 (삽입·도형 fill·배경 blip·그룹 내부; 크롭·타일·EMF 등 제한) |
 | 기본 도형 | 부분 (일부는 RECT 폴백) |
+| **표** | **부분** — `TABLE` DTO + 렌더(FigJam `createTable` 또는 Design 폴백); 병합·스타일 한계 |
 | 배경 색/이미지 | 부분 (그라데이션 없음) |
 | 테마 색 | 부분/미흡 |
 | 마스터·레이아웃·컴포넌트 | 부분 |
@@ -135,8 +136,8 @@ PRD 문서의 Phase 1~5(로드맵)와 레포 구현은 1:1이 아니다. `PIPELI
 
 ## 7. 알려진 한계·기술 부채
 
-- 미처리/취약: **차트(`CTGraphicalObjectFrame`)**, **커넥터**, **표(`XSLFTable`)** 등.
-- 배경: **그라데이션**, blip **크롭·타일·stretch**, **EMF/WMF**, theme `bgRef` 등.
+- 미처리/취약: **차트**, **커넥터**, 표 **Design 네이티브**(API 없음)·**셀 병합 시 FigJam 네이티브 불가**·격자 **이웃 셀 스트로크 이중** 등.
+- 배경: **그라데이션**, blip **타일·stretch**, **삽입/배경/도형 blip 크롭** 일부 처리됨(EMF/ImageIO 불가 등은 원본)·**EMF/WMF**, theme `bgRef` 등.
 - 이미지: 단일 파일 **~15MB 초과** 시 Base64 생략; Figma **4K 제한** 초과 시 실패 가능.
 - 삼각형 `adj`, `adjustValues` XML 파싱 견고함은 샘플에 따라 추가 필요.
 - **Import Report 페이지 (`00`)**, **추출 에셋 페이지 (`03`)** 미구현.
@@ -149,7 +150,7 @@ PRD 문서의 Phase 1~5(로드맵)와 레포 구현은 1:1이 아니다. `PIPELI
 사용자 요청이 최우선. 그다음 PRD 우선순위(3.3절)·로드맵(19절 근처)에 맞춘 권장 순서:
 
 1. **이미지 완성도** — 크롭, EMF/대체, theme bgRef, 배경 blip 세부.
-2. **도형 범위 확장** — 커넥터, 차트, 표, 비-simple shape.
+2. **도형 범위 확장** — 커넥터, 차트; 표는 Design에서 네이티브 API 확장 시 또는 오토레이아웃 격자 개선.
 3. **배경** — 그라데이션, 고급 fill.
 4. **`00 Import Report` / `03 Extracted Assets`** 페이지·리포트 JSON.
 5. **폰트** — 누락 감지, 게이트, fallback UX, 재검사.
@@ -162,11 +163,10 @@ PRD 문서의 Phase 1~5(로드맵)와 레포 구현은 1:1이 아니다. `PIPELI
 
 ## 9. 문서·리비전 유지 규칙
 
-1. **`IMPORT_REVISION` 변경 시** — `ImportController`와 `import-build.ts` **동시** 수정, 본 문서 **섹션 4** 숫자 갱신.
-2. **포트·API URL 변경 시** — `application.properties`, `App.tsx`, `manifest.json` 함께 확인.
-3. **Phase/범위 판단이 바뀌면** — 섹션 6 표 업데이트.
-4. **큰 기능 완료 시** — 섹션 5(지금까지)와 7(한계) 정합성 점검.
-5. **날짜 로그** — `worklogs/YYYY-MM-DD/*.md`에만 상세 일지; HANDOFF는 스냅샷·의사결정 위주.
+1. **포트·API URL 변경 시** — `application.properties`, `App.tsx`, `manifest.json` 함께 확인.
+2. **Phase/범위 판단이 바뀌면** — 섹션 6 표 업데이트.
+3. **큰 기능 완료 시** — 섹션 5(지금까지)와 7(한계) 정합성 점검.
+4. **날짜 로그** — `worklogs/YYYY-MM-DD/*.md`에 **당일 상세**; HANDOFF는 **하루 1회** 스냅샷·의사결정 위주.
 
 ---
 
@@ -174,5 +174,3 @@ PRD 문서의 Phase 1~5(로드맵)와 레포 구현은 1:1이 아니다. `PIPELI
 
 - PRD: `2026-05-04-ppt-to-figma-plugin-prd.md`
 - 작업 일지 예: `worklogs/2026-05-11/2026-05-11.md`
-
-*마지막으로 저장소의 `IMPORT_REVISION`과 이 문서 섹션 4가 일치하는지 확인할 것.*

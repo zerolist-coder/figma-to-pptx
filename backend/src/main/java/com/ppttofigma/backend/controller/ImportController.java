@@ -15,8 +15,8 @@ import java.util.Map;
 /**
  * PPTX 가져오기 REST 진입점.
  * <p><b>역할:</b> 멀티파트 업로드 수신, {@link com.ppttofigma.backend.service.PptxService#analyzePptx} 호출,
- * 결과·에러를 JSON 맵으로 감싸 반환한다({@code data}, {@code buildLabel}, {@code error} 등).
- * <p><b>기능:</b> CORS 허용, 최소 로그(파일명), 클라이언트와 맞추는 빌드 리비전 문자열 부착.
+ * 결과·에러를 JSON 맵으로 감싸 반환한다({@code data}, {@code error} 등).
+ * <p><b>기능:</b> CORS 허용, 최소 로그(파일명).
  */
 @RestController
 @RequestMapping("/api/imports")
@@ -25,23 +25,18 @@ public class ImportController {
 
     private static final Logger log = LoggerFactory.getLogger(ImportController.class);
 
-    /** 플러그인 {@code import-build.ts} 의 {@code IMPORT_REVISION} 과 맞출 것. */
-    private static final int IMPORT_REVISION = 13;
-
     @Autowired
     private PptxService pptxService;
 
     /** pptx 파일 한 개를 분석해 JSON으로 돌려준다. 본문 필드 {@code file}. */
     @PostMapping("/analyze")
     public ResponseEntity<Map<String, Object>> analyzePptx(@RequestParam("file") MultipartFile file) {
-        String tag = Integer.toString(IMPORT_REVISION);
         String fileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "(이름 없음)";
         Map<String, Object> response = new HashMap<>();
 
         if (file.isEmpty()) {
             log.warn("{}", fileName);
             response.put("error", "File is empty");
-            response.put("buildLabel", tag);
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -53,13 +48,11 @@ public class ImportController {
             response.put("importId", "imp_" + System.currentTimeMillis());
             response.put("message", "Analysis complete");
             response.put("data", analyzedData);
-            response.put("buildLabel", tag);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("{}", fileName, e);
             response.put("error", e.getMessage());
-            response.put("buildLabel", tag);
             return ResponseEntity.internalServerError().body(response);
         }
     }

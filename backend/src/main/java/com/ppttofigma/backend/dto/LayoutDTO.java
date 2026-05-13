@@ -10,6 +10,9 @@ public class LayoutDTO {
     /** 레이아웃 배경 그림(없으면 마스터 배경 그림으로 폴백한 값) */
     private String backgroundImageBase64;
     private String backgroundImageMimeType;
+    private ImageFillStyleDTO backgroundImageFillStyle;
+    /** 레이아웃 자체 또는 상속 가능한 OOXML 채우기(그라데이션 등) 감지. 마스터에만 있어도 true 가 될 수 있음(PptxService). */
+    private boolean backgroundAdvancedFill;
     private List<ShapeDTO> shapes = new ArrayList<>();
 
     public String getName() { return name; }
@@ -20,6 +23,18 @@ public class LayoutDTO {
     public void setBackgroundImageBase64(String backgroundImageBase64) { this.backgroundImageBase64 = backgroundImageBase64; }
     public String getBackgroundImageMimeType() { return backgroundImageMimeType; }
     public void setBackgroundImageMimeType(String backgroundImageMimeType) { this.backgroundImageMimeType = backgroundImageMimeType; }
+    public ImageFillStyleDTO getBackgroundImageFillStyle() {
+        return backgroundImageFillStyle;
+    }
+    public void setBackgroundImageFillStyle(ImageFillStyleDTO backgroundImageFillStyle) {
+        this.backgroundImageFillStyle = backgroundImageFillStyle;
+    }
+    public boolean isBackgroundAdvancedFill() {
+        return backgroundAdvancedFill;
+    }
+    public void setBackgroundAdvancedFill(boolean backgroundAdvancedFill) {
+        this.backgroundAdvancedFill = backgroundAdvancedFill;
+    }
     public List<ShapeDTO> getShapes() { return shapes; }
     public void setShapes(List<ShapeDTO> shapes) { this.shapes = shapes; }
 }

@@ -13,6 +13,7 @@ public class SlideDTO {
     /** 슬라이드 배경 그림(blip). 레이아웃→마스터 상속 해석 */
     private String backgroundImageBase64;
     private String backgroundImageMimeType;
+    private ImageFillStyleDTO backgroundImageFillStyle;
     private List<ShapeDTO> shapes = new ArrayList<>();
 
     // Getters and Setters
@@ -28,6 +29,12 @@ public class SlideDTO {
     public void setBackgroundImageBase64(String backgroundImageBase64) { this.backgroundImageBase64 = backgroundImageBase64; }
     public String getBackgroundImageMimeType() { return backgroundImageMimeType; }
     public void setBackgroundImageMimeType(String backgroundImageMimeType) { this.backgroundImageMimeType = backgroundImageMimeType; }
+    public ImageFillStyleDTO getBackgroundImageFillStyle() {
+        return backgroundImageFillStyle;
+    }
+    public void setBackgroundImageFillStyle(ImageFillStyleDTO backgroundImageFillStyle) {
+        this.backgroundImageFillStyle = backgroundImageFillStyle;
+    }
     public List<ShapeDTO> getShapes() { return shapes; }
     public void setShapes(List<ShapeDTO> shapes) { this.shapes = shapes; }
 }
